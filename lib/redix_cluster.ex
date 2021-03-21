@@ -52,6 +52,24 @@ defmodule RedixCluster do
           {:ok, Redix.Protocol.redis_value()} | {:error, Redix.Error.t() | atom}
   def command(conn, command, opts \\ []), do: command(conn, command, opts, 0, 0)
 
+  def command!(conn, command, opts \\ []) do
+    case command(conn, command, opts) do
+      {:ok, response} -> response
+      {:error, error} -> raise error
+    end
+  end
+
+  def noreply_command(conn, command, opts \\ []) do
+    noreply_pipeline(conn, [command], opts)
+  end
+
+  def noreply_command!(conn, command, opts \\ []) do
+    case noreply_command(conn, command, opts) do
+      :ok -> :ok
+      {:error, error} -> raise error
+    end
+  end
+
   @doc """
   `pipeline/3`
 
@@ -60,6 +78,28 @@ defmodule RedixCluster do
   @spec pipeline(conn, [command], Keyword.t()) ::
           {:ok, [Redix.Protocol.redis_value()]} | {:error, atom}
   def pipeline(conn, commands, opts \\ []), do: pipeline(conn, commands, opts, 0, 0)
+
+  def pipeline!(conn, commands, opts \\ []) do
+    case pipeline(conn, commands, opts) do
+      {:ok, response} -> response
+      {:error, error} -> raise error
+    end
+  end
+
+  def noreply_pipeline(conn, commands, opts \\ []) do
+    commands = [["CLIENT", "REPLY", "OFF"]] ++ commands ++ [["CLIENT", "REPLY", "ON"]]
+
+    # The "OK" response comes from the last "CLIENT REPLY ON".
+    with {:ok, ["OK"]} <- pipeline(conn, commands, opts),
+         do: :ok
+  end
+
+  def noreply_pipeline!(conn, commands, opts \\ []) do
+    case noreply_pipeline(conn, commands, opts) do
+      :ok -> :ok
+      {:error, error} -> raise error
+    end
+  end
 
   defp command(_conn, _command, _opts, count, _delay) when count >= @max_retry,
     do: {:error, :no_connection}

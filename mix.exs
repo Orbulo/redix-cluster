@@ -11,7 +11,7 @@ defmodule RedixCluster.Mixfile do
       deps: deps(),
       package: package(),
       name: "RedixCluster",
-      source_url: "https://github.com/SpotIM/redix-cluster",
+      source_url: "https://github.com/Orbulo/redix-cluster",
       elixirc_paths: elixirc_paths(Mix.env()),
       # The main page in the docs
       docs: [main: "RedixCluster", extras: ["README.md"]],
