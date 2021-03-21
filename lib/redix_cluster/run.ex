@@ -41,6 +41,22 @@ defmodule RedixCluster.Run do
     end
   end
 
+  @spec noreply_pipeline(conn, [command], Keyword.t()) :: {:ok, term} | {:error, term}
+  def noreply_pipeline(conn, pipeline, opts) do
+    case RedixCluster.Monitor.get_slot_cache(conn) do
+      {:cluster, slots_maps, slots, version} ->
+        pipeline
+        |> parse_keys_from_pipeline
+        |> keys_to_slot_hashs
+        |> is_same_slot_hashs
+        |> get_pool_by_slot(slots_maps, slots, version)
+        |> query_redis_pool(conn, pipeline, :pipeline, opts)
+
+      {:not_cluster, version, pool_name} ->
+        query_redis_pool({version, pool_name}, conn, pipeline, :noreply_pipeline, opts)
+    end
+  end
+
   defp parse_key_from_command([term1, term2 | _]), do: verify_command_key(term1, term2)
   defp parse_key_from_command([term]), do: verify_command_key(term, "")
   defp parse_key_from_command(_), do: {:error, :invalid_cluster_command}

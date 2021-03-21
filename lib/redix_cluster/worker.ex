@@ -33,8 +33,16 @@ defmodule RedixCluster.Worker do
     {:reply, Redix.command(conn, params, opts), state}
   end
 
+  def handle_call({:noreply_command, params, opts}, _From, %{conn: conn} = state) do
+    {:reply, Redix.noreply_command(conn, params, opts), state}
+  end
+
   def handle_call({:pipeline, params, opts}, _from, %{conn: conn} = state) do
     {:reply, Redix.pipeline(conn, params, opts), state}
+  end
+
+  def handle_call({:noreply_pipeline, params, opts}, _from, %{conn: conn} = state) do
+    {:reply, Redix.noreply_pipeline(conn, params, opts), state}
   end
 
   def handle_call(_request, _from, state), do: {:reply, :ok, state}

@@ -87,10 +87,8 @@ defmodule RedixCluster do
   end
 
   def noreply_pipeline(conn, commands, opts \\ []) do
-    commands = [["CLIENT", "REPLY", "OFF"]] ++ commands ++ [["CLIENT", "REPLY", "ON"]]
-
     # The "OK" response comes from the last "CLIENT REPLY ON".
-    with {:ok, ["OK"]} <- pipeline(conn, commands, opts),
+    with {:ok, ["OK"]} <- noreply_pipeline(conn, commands, opts),
          do: :ok
   end
 
@@ -123,11 +121,25 @@ defmodule RedixCluster do
     |> need_retry(conn, commands, opts, count, delay, :pipeline)
   end
 
+  defp noreply_pipeline(_conn, _commands, _opts, count, _delay) when count >= @max_retry,
+    do: {:error, :no_connection}
+
+  defp noreply_pipeline(conn, commands, opts, count, delay) do
+    Process.sleep(delay)
+
+    conn
+    |> RedixCluster.Run.noreply_pipeline(commands, opts)
+    |> need_retry(conn, commands, opts, count, delay, :noreply_pipeline)
+  end
+
   defp need_retry({:error, :retry}, conn, command, opts, count, delay, :command),
     do: command(conn, command, opts, count + 1, delay + @redis_retry_delay)
 
   defp need_retry({:error, :retry}, conn, commands, opts, count, delay, :pipeline),
     do: pipeline(conn, commands, opts, count + 1, delay + @redis_retry_delay)
+
+  defp need_retry({:error, :retry}, conn, commands, opts, count, delay, :noreply_pipeline),
+    do: noreply_pipeline(conn, commands, opts, count + 1, delay + @redis_retry_delay)
 
   defp need_retry(result, _conn, _command, _count, _delay, _opts, _type), do: result
 end
