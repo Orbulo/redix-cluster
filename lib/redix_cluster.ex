@@ -88,7 +88,7 @@ defmodule RedixCluster do
 
   def noreply_pipeline(conn, commands, opts \\ []) do
     # The "OK" response comes from the last "CLIENT REPLY ON".
-    with {:ok, ["OK"]} <- noreply_pipeline(conn, commands, opts),
+    with {:ok, ["OK"]} <- noreply_pipeline(conn, commands, opts, 0, 0),
          do: :ok
   end
 
