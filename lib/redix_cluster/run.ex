@@ -50,7 +50,7 @@ defmodule RedixCluster.Run do
         |> keys_to_slot_hashs
         |> is_same_slot_hashs
         |> get_pool_by_slot(slots_maps, slots, version)
-        |> query_redis_pool(conn, pipeline, :pipeline, opts)
+        |> query_redis_pool(conn, pipeline, :noreply_pipeline, opts)
 
       {:not_cluster, version, pool_name} ->
         query_redis_pool({version, pool_name}, conn, pipeline, :noreply_pipeline, opts)
