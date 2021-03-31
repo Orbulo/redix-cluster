@@ -52,6 +52,7 @@ defmodule RedixCluster do
           {:ok, Redix.Protocol.redis_value()} | {:error, Redix.Error.t() | atom}
   def command(conn, command, opts \\ []), do: command(conn, command, opts, 0, 0)
 
+  @spec command!(conn, command, Keyword.t()) :: Redix.Protocol.redis_value()
   def command!(conn, command, opts \\ []) do
     case command(conn, command, opts) do
       {:ok, response} -> response
@@ -59,10 +60,13 @@ defmodule RedixCluster do
     end
   end
 
+  @spec noreply_command(conn, command, Keyword.t()) ::
+          :ok | {:error, atom() | Redix.Error.t() | Redix.ConnectionError.t()}
   def noreply_command(conn, command, opts \\ []) do
     noreply_pipeline(conn, [command], opts)
   end
 
+  @spec noreply_command!(conn, command, Keyword.t()) :: :ok
   def noreply_command!(conn, command, opts \\ []) do
     case noreply_command(conn, command, opts) do
       :ok -> :ok
@@ -79,6 +83,7 @@ defmodule RedixCluster do
           {:ok, [Redix.Protocol.redis_value()]} | {:error, atom}
   def pipeline(conn, commands, opts \\ []), do: pipeline(conn, commands, opts, 0, 0)
 
+  @spec pipeline!(conn, [command], Keyword.t()) :: [Redix.Protocol.redis_value()]
   def pipeline!(conn, commands, opts \\ []) do
     case pipeline(conn, commands, opts) do
       {:ok, response} -> response
@@ -86,12 +91,15 @@ defmodule RedixCluster do
     end
   end
 
+  @spec noreply_pipeline(conn, [command], Keyword.t()) ::
+          :ok | {:error, atom}
   def noreply_pipeline(conn, commands, opts \\ []) do
     # The "OK" response comes from the last "CLIENT REPLY ON".
     with {:ok, ["OK"]} <- noreply_pipeline(conn, commands, opts, 0, 0),
          do: :ok
   end
 
+  @spec noreply_pipeline!(conn, [command], Keyword.t()) :: :ok
   def noreply_pipeline!(conn, commands, opts \\ []) do
     case noreply_pipeline(conn, commands, opts) do
       :ok -> :ok
