@@ -9,7 +9,7 @@ defmodule RedixCluster do
 
   use Supervisor
 
-  @type command :: [binary]
+  @type command :: [String.Chars.t()]
   @type conn :: module | atom | pid
 
   @max_retry 1_000
