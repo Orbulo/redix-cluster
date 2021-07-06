@@ -89,6 +89,8 @@ defmodule RedixCluster.Run do
 
   defp is_same_slot_hashs({:error, _} = error), do: error
 
+  defp is_same_slot_hashs([]), do: 1
+
   defp is_same_slot_hashs(hashs) do
     hash = List.first(hashs)
 
