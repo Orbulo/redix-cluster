@@ -166,12 +166,12 @@ defmodule RedixCluster.Run do
     # <sha> <num_keys> key1 key2 ...
     if command == "eval" or command == "evalsha" do
       num_keys = Enum.at(rest, 1)
-      Enum.slice(rest, 2..(2 + num_keys - 1))
+      Enum.slice(rest, 2..(2 + num_keys - 1)) |> Enum.map(to_string)
     else
       if command == "load" do
         nil
       else
-        Enum.at(rest, 0)
+        Enum.at(rest, 0) |> to_string
       end
     end
   end
