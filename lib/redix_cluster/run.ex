@@ -59,17 +59,11 @@ defmodule RedixCluster.Run do
   end
 
   defp parse_keys_from_pipeline(pipeline) do
-    case get_command_keys(pipeline) do
-      {:error, _} = error ->
-        error
-
-      keys ->
-        List.flatten(
-          for [command | rest] <- keys, key = verify_command_key(command, rest), key != nil do
-            key
-          end
-        )
-    end
+    List.flatten(
+      for [command | rest] <- pipeline, key = verify_command_key(command, rest), key != nil do
+        key
+      end
+    )
   end
 
   def key_to_slot_hash({:error, _} = error), do: error
@@ -168,18 +162,11 @@ defmodule RedixCluster.Run do
       num_keys = Enum.at(rest, 1)
       Enum.slice(rest, 2..(2 + num_keys - 1)) |> Enum.map(&to_string/1)
     else
-      if command == "load" do
+      if command == "script" do
         nil
       else
         Enum.at(rest, 0) |> to_string
       end
     end
   end
-
-  defp get_command_keys([["MULTI"] | _]), do: {:error, :no_support_transaction}
-  defp get_command_keys(commands), do: make_cmd_key(commands, [])
-
-  defp make_cmd_key([], acc), do: acc
-  defp make_cmd_key([[x, y | _] | rest], acc), do: make_cmd_key(rest, [[x, y] | acc])
-  defp make_cmd_key([_ | rest], acc), do: make_cmd_key(rest, acc)
 end
