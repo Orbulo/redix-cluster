@@ -67,9 +67,9 @@ defmodule RedixCluster.Run do
         error
 
       keys ->
-        for [term1, term2] <- keys,
-            term1 !== "eval" and term1 !== "evalsha",
-            do: verify_command_key(term1, term2)
+        Enum.flat_map(keys, fn [command | rest] ->
+          verify_command_key(command, rest)
+        end)
     end
   end
 
@@ -148,18 +148,28 @@ defmodule RedixCluster.Run do
 
   defp parse_trans_result(payload, _conn, _), do: payload
 
-  defp verify_command_key(term1, term2) do
-    term1
+  defp verify_command_key(command, rest) do
+    command
     |> to_string
     |> String.downcase()
-    |> forbid_harmful_command(term2)
+    |> forbid_harmful_command(rest)
   end
 
   defp forbid_harmful_command("info", _), do: {:error, :invalid_cluster_command}
   defp forbid_harmful_command("config", _), do: {:error, :invalid_cluster_command}
   defp forbid_harmful_command("shutdown", _), do: {:error, :invalid_cluster_command}
   defp forbid_harmful_command("slaveof", _), do: {:error, :invalid_cluster_command}
-  defp forbid_harmful_command(_, key), do: to_string(key)
+
+  # Returns the keys of the command
+  defp forbid_harmful_command(command, rest) do
+    # <sha> <num_keys> key1 key2 ...
+    if command === "eval" or command === "evalsha" do
+      num_keys = Enum.at(rest, 1)
+      Enum.slice(rest, 2..(2 + num_keys - 1))
+    else
+      Enum.at(rest, 0)
+    end
+  end
 
   defp get_command_keys([["MULTI"] | _]), do: {:error, :no_support_transaction}
   defp get_command_keys(commands), do: make_cmd_key(commands, [])
