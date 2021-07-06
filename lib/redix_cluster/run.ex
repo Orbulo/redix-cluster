@@ -63,8 +63,13 @@ defmodule RedixCluster.Run do
 
   defp parse_keys_from_pipeline(pipeline) do
     case get_command_keys(pipeline) do
-      {:error, _} = error -> error
-      keys -> for [term1, term2] <- keys, do: verify_command_key(term1, term2)
+      {:error, _} = error ->
+        error
+
+      keys ->
+        for [term1, term2] <- keys,
+            term1 !== "eval" and term1 !== "evalsha",
+            do: verify_command_key(term1, term2)
     end
   end
 
