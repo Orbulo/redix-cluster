@@ -14,9 +14,10 @@ defmodule RedixCluster.Run do
   def command(conn, command, opts) do
     case RedixCluster.Monitor.get_slot_cache(conn) do
       {:cluster, slots_maps, slots, version} ->
-        command
-        |> parse_key_from_command
-        |> key_to_slot_hash
+        [command]
+        |> parse_keys_from_pipeline
+        |> keys_to_slot_hashs
+        |> is_same_slot_hashs
         |> get_pool_by_slot(slots_maps, slots, version)
         |> query_redis_pool(conn, command, :command, opts)
 
@@ -56,10 +57,6 @@ defmodule RedixCluster.Run do
         query_redis_pool({version, pool_name}, conn, pipeline, :noreply_pipeline, opts)
     end
   end
-
-  defp parse_key_from_command([term1, term2 | _]), do: verify_command_key(term1, term2)
-  defp parse_key_from_command([term]), do: verify_command_key(term, "")
-  defp parse_key_from_command(_), do: {:error, :invalid_cluster_command}
 
   defp parse_keys_from_pipeline(pipeline) do
     case get_command_keys(pipeline) do
