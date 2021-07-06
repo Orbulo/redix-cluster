@@ -93,7 +93,9 @@ defmodule RedixCluster.Run do
 
   defp is_same_slot_hashs({:error, _} = error), do: error
 
-  defp is_same_slot_hashs([hash | _] = hashs) do
+  defp is_same_slot_hashs(hashs) do
+    hash = Enum.at(hashs, 0)
+
     case Enum.all?(hashs, fn h -> h != nil and h == hash end) do
       false -> {:error, :key_must_same_slot}
       true -> hash
