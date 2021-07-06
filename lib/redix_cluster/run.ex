@@ -64,9 +64,11 @@ defmodule RedixCluster.Run do
         error
 
       keys ->
-        Enum.flat_map(keys, fn [command | rest] ->
-          verify_command_key(command, rest)
-        end)
+        List.flatten(
+          for [command | rest] <- keys, key = verify_command_key(command, rest), key != nil do
+            key
+          end
+        )
     end
   end
 
@@ -162,11 +164,15 @@ defmodule RedixCluster.Run do
   # Returns the keys of the command
   defp forbid_harmful_command(command, rest) do
     # <sha> <num_keys> key1 key2 ...
-    if command === "eval" or command === "evalsha" do
+    if command == "eval" or command == "evalsha" do
       num_keys = Enum.at(rest, 1)
       Enum.slice(rest, 2..(2 + num_keys - 1))
     else
-      Enum.at(rest, 0) || ""
+      if command == "load" do
+        nil
+      else
+        Enum.at(rest, 0)
+      end
     end
   end
 
