@@ -94,7 +94,7 @@ defmodule RedixCluster.Run do
   defp is_same_slot_hashs({:error, _} = error), do: error
 
   defp is_same_slot_hashs(hashs) do
-    hash = Enum.at(hashs, 0)
+    hash = List.first(hashs)
 
     case Enum.all?(hashs, fn h -> h != nil and h == hash end) do
       false -> {:error, :key_must_same_slot}
@@ -166,7 +166,7 @@ defmodule RedixCluster.Run do
       num_keys = Enum.at(rest, 1)
       Enum.slice(rest, 2..(2 + num_keys - 1))
     else
-      Enum.at(rest, 0)
+      Enum.at(rest, 0) || ""
     end
   end
 
